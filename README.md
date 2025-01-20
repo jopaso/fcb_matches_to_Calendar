@@ -8,9 +8,9 @@ pip install beautifulsoup4
 pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 ```
 
-You will also need to follow the steps 1-4 from this webpage to create your google calendar API:
+You will also need to follow steps 1-4 from this webpage to create your google calendar API:
 
 https://medium.com/@ayushbhatnagarmit/supercharge-your-scheduling-automating-google-calendar-with-python-87f752010375
 
 
-Once executed the script, it will create a new calendar named 'Football' if not found one and create there an event for every football game  with confirmed date.
+Once executed, the script will create a new calendar named 'Football' if not found one and create there an event for every football game  with confirmed date.
