@@ -74,36 +74,40 @@ def add_to_calendar(calendar, service, match):
     service.events().insert(calendarId=calendar['id'], body=event).execute()
     
 
-def get_dates(html_text):
+def get_date(match):
 
-    dates = html_text.find_all('div', {"class" : "fixture-info__time"})
-    known_dates = []
-    for date in dates:
-        try:
-            timestamp = int(date['data-kickoff']) / 1000 #Originally is in miliseconds
-            if datetime.fromtimestamp(timestamp) not in known_dates:
-                known_dates.append(datetime.fromtimestamp(timestamp))
+    date = match.find('div', {"class" : "fixture-info__time"})
+    try:
+        timestamp = int(date['data-kickoff']) / 1000 #Originally is in miliseconds
+        return datetime.fromtimestamp(timestamp)
 
-        except: # This means that the match exact date isn't confirmed yet -> ignore
-            pass
-    
-    return known_dates
+    except: # This means that the match exact date isn't confirmed yet -> ignore
+        return None
 
 def get_matches(html_text):
-    home_teams = list(map(lambda x: x.string.strip(), html_text.find_all('div', {"class" : "fixture-info__name fixture-info__name--home"})))
-    away_teams = list(map(lambda x: x.string.strip(), html_text.find_all('div', {"class" : "fixture-info__name fixture-info__name--away"})))
-    competitions = list(map(lambda x: x.string.strip(),  html_text.find_all('span', {"class" : "fixture-result-list__name visually-hidden"})))
-    dates = get_dates(html_text) 
-
-    #dates length will be shorter as not all matches have a confirmed date
-    matches = zip(home_teams[:len(dates)], away_teams[:len(dates)], competitions[:len(dates)], dates) 
+    matches_list = html_text.find_all('div', {"class" : "fixture-result-list__fixture"})
     all_matches = []
-    for match in matches: # Structure the information for more readable access
-        match_dictionari = {
-            'home_team' : match[0],
-            'away_team' : match[1],
-            'competition' : match[2],
-            'date' : match[3],
+    contador = 0
+    for match in matches_list:
+        
+        #print(f'{match}\n\n\n')
+        home_team = match.find('div', {"class" : "fixture-info__name fixture-info__name--home"}).string.strip()
+        away_team = match.find('div', {"class" : "fixture-info__name fixture-info__name--away"}).string.strip()
+        competition = match.find('div', {"class" : "fixture-result-list__fixture-competition"}).string
+       
+
+        date = get_date(match)
+
+        if date is None or competition is None:
+            #print(f"Fecha no confirmada para {home_team} vs {away_team} - {competition}")
+            continue
+        else:
+            #print(f"Añadiendo {home_team} vs {away_team} - {competition}")
+            match_dictionari = {
+            'home_team' : home_team,
+            'away_team' : away_team,
+            'competition' : competition.strip(),
+            'date' : date,
         }
         all_matches.append(match_dictionari)
     
@@ -137,6 +141,7 @@ def main():
     calendar_events = list_calendar_events(calendar, service)
     
     for match in all_matches:
+        print(f'\nCreating event for:\n {match}')
         if not is_in_calendar(calendar_events, match):
             add_to_calendar(calendar, service, match)
 
